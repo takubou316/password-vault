@@ -92,6 +92,11 @@ export function showBiometricUnlockButton() {
   el.biometricOrLabel.style.display = '';
 }
 
+export function hideBiometricUnlockButton() {
+  el.biometricUnlockBtn.style.display = 'none';
+  el.biometricOrLabel.style.display = 'none';
+}
+
 export function openDeviceSettingsModal({ supported, enrolled }) {
   el.biometricUnsupportedNote.style.display = supported ? 'none' : '';
   el.biometricEnableBtn.style.display = supported && !enrolled ? '' : 'none';

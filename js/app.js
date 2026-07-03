@@ -27,17 +27,25 @@ async function boot() {
   ui.setLockMode(existingBlob ? 'unlock' : 'setup');
   ui.showLockScreen();
 
-  if (existingBlob) {
+  // クリックリスナーは一度だけ登録し、押された時点の最新レコードを都度読みに行く。
+  // こうしておけば、この後の「端末設定」で生体認証を有効化しても（ページ再読込なしで）
+  // すぐにボタンが機能する。
+  ui.el.biometricUnlockBtn.addEventListener('click', async () => {
     const record = await loadBiometricUnlock();
-    if (record && biometric.isSupported()) {
-      ui.showBiometricUnlockButton();
-      ui.el.biometricUnlockBtn.addEventListener('click', () => handleBiometricUnlock(record));
-    }
-  }
+    if (!record) return;
+    await handleBiometricUnlock(record);
+  });
+  await refreshBiometricButtonVisibility(existingBlob);
 
   ui.el.unlockBtn.addEventListener('click', () => handleUnlock());
   ui.el.masterPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleUnlock(); });
   wireAppScreen();
+}
+
+async function refreshBiometricButtonVisibility(hasVault) {
+  if (!hasVault) return;
+  const record = await loadBiometricUnlock();
+  if (record && biometric.isSupported()) ui.showBiometricUnlockButton();
 }
 
 async function handleUnlock() {
@@ -199,6 +207,7 @@ function wireDeviceSettingsModal() {
       const record = await biometric.enroll(masterPasswordPlain);
       await saveBiometricUnlock(record);
       ui.setBiometricSettingsStatus(true);
+      ui.showBiometricUnlockButton();
       ui.showToast('生体認証を有効にしました');
     } catch {
       ui.setBiometricSettingsError('生体認証の登録に失敗またはキャンセルされました');
@@ -208,6 +217,7 @@ function wireDeviceSettingsModal() {
   ui.el.biometricDisableBtn.addEventListener('click', async () => {
     await clearBiometricUnlock();
     ui.setBiometricSettingsStatus(false);
+    ui.hideBiometricUnlockButton();
     ui.showToast('生体認証を無効にしました');
   });
 }
