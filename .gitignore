@@ -1,0 +1,5 @@
+# うっかりパスワードの平文/暗号化データをコミットしないためのガード
+*.vault.json
+vault-backup*.json
+*.env
+.env
