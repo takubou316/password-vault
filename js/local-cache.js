@@ -58,3 +58,36 @@ export async function loadDriveFileId() {
     req.onerror = () => reject(req.error);
   });
 }
+
+// biometricキーは端末ローカル専用。Google Driveには絶対に同期しない。
+const BIOMETRIC_KEY = 'biometric';
+
+export async function saveBiometricUnlock(record) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(record, BIOMETRIC_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function loadBiometricUnlock() {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).get(BIOMETRIC_KEY);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function clearBiometricUnlock() {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(BIOMETRIC_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}

@@ -16,6 +16,8 @@
     <div class="lock-card">
       <h1>🔒 Password Vault</h1>
       <p id="lock-mode-label" class="muted"></p>
+      <button id="biometric-unlock-btn" style="display:none">👆 生体認証で解除</button>
+      <p id="biometric-or-label" class="muted" style="display:none">または</p>
       <input type="password" id="master-password-input" placeholder="マスターパスワード" autocomplete="current-password">
       <input type="password" id="master-password-confirm" placeholder="マスターパスワード（確認）" style="display:none">
       <button id="unlock-btn">解除する</button>
@@ -31,6 +33,7 @@
       <button id="import-btn">インポート</button>
       <button id="sync-btn">同期</button>
       <span id="sync-status" class="muted"></span>
+      <button id="device-settings-btn" title="この端末の設定">⚙</button>
       <button id="lock-btn" title="ロック">🔒</button>
     </header>
     <main>
@@ -84,6 +87,26 @@
       <div class="modal-actions">
         <button id="import-confirm-btn" style="display:none">選択した項目を保存</button>
         <button id="import-cancel-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="device-settings-modal" class="modal" style="display:none">
+    <div class="modal-card">
+      <h2>この端末の設定</h2>
+      <p class="muted">この端末（このブラウザ）専用の設定です。他の端末やGoogle Driveには一切共有されません。</p>
+      <p class="muted">
+        生体認証を有効にすると、暗号化したマスターパスワードをこの端末のブラウザ内に保存し、指紋/顔認証の成功後に自動で取り出してロックを解除します。
+        ただし、これは「生体情報から暗号鍵を直接作る」仕組みではなく、あくまでアプリのコードが生体認証の成功を確認してから保存データを復号する、利便性重視の仕組みです。
+        端末のストレージやブラウザプロファイルそのものにアクセスされた場合は保護になりません。より強固に守りたい場合は生体認証を無効のままにし、毎回マスターパスワードを入力してください。
+      </p>
+      <p id="biometric-unsupported-note" class="muted error" style="display:none">この端末/ブラウザは生体認証（WebAuthn）に対応していないため、有効化できません。</p>
+      <p id="biometric-status" class="muted"></p>
+      <button id="biometric-enable-btn">生体認証を有効にする</button>
+      <button id="biometric-disable-btn" class="danger" style="display:none">生体認証を無効にする</button>
+      <p id="biometric-settings-error" class="error"></p>
+      <div class="modal-actions">
+        <button id="device-settings-close-btn">閉じる</button>
       </div>
     </div>
   </div>

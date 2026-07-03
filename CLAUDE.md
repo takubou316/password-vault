@@ -25,6 +25,7 @@ https://takubou316.github.io/password-vault/ （GitHub Pages、リポジトリ: 
 - `js/drive-sync.js` — Google Identity Services (Token Model) によるクライアントサイドのみのOAuthと、Google Drive `appDataFolder`（非表示領域）への暗号化blobの読み書き。バックエンドサーバーなし。
 - `js/import-csv.js` — Chrome/Edgeのパスワードエクスポートcsvの自作パーサ
 - `js/import-notes.js` — メモアプリの雑多なテキストからサイト名/ID/パスワード候補をヒューリスティック抽出（自動保存はせず必ずレビューUIを経由）
+- `js/biometric.js` — WebAuthn(生体認証)による「便利性重視」の簡易ロック解除。仕組みと限界は下記セキュリティ上の注意を参照。
 - `js/ui.js` — DOM描画・フォーム読み書き
 - `js/app.js` — 起動処理・状態管理・各モジュールの結線（エントリポイント）
 - `manifest.json` / `service-worker.js` — PWA化（ホーム画面追加、静的アセットのオフラインキャッシュ。Google API宛リクエストはキャッシュしない）
@@ -44,3 +45,12 @@ https://takubou316.github.io/password-vault/ （GitHub Pages、リポジトリ: 
 
 - vaultの暗号化データ（IndexedDBの中身やDrive上のファイル）をリポジトリにコミットしないこと（`.gitignore`参照）。
 - リポジトリを公開してもソースコードのみが見える設計だが、`CLIENT_ID` は公開情報として扱ってよい（OAuthクライアントシークレットは使用していない）。
+
+### 生体認証によるロック解除について（重要な限界）
+
+- この機能はWebAuthn（Face ID/指紋/Windows Hello等）を利用するが、**生体情報から暗号鍵を直接導出する方式（PRF/hmac-secret拡張）は使っていない**。対応端末がまだ少ないため。
+- 実体は「マスターパスワードをAES-GCMで暗号化し、そのラップ鍵ごと端末のIndexedDBに保存」する方式。生体認証（`navigator.credentials.get()`）が成功したことをJSコードが確認できたら、保存しておいたラップ鍵で復号してマスターパスワードを取り出す、という流れ。
+- つまり生体認証の成功は「復号処理を許可するゲート」として機能しているだけで、暗号学的に指紋や顔情報にバインドされているわけではない。端末のストレージ（IndexedDB）やブラウザプロファイルに直接アクセスできれば、理論上は生体認証を経由せずにマスターパスワードを取り出すことも可能。
+- バックエンドサーバーを持たないため、WebAuthnのchallenge/attestation/assertionの暗号学的検証もできない。ローカルで生成したランダムchallengeを使い、`create()`/`get()`のPromiseが正常にresolveしたことのみを認証成功の判定材料としている。
+- したがって本機能は端末を勝手に触られてすぐ覗き見られることへの抑止・利便性のためのものであり、端末紛失・盗難・マルウェア感染などの脅威に対する強固な防御ではない。より高いセキュリティが必要な場面では生体認証を無効化し、都度マスターパスワードを入力すること。
+- 生体認証の設定・保存データは端末（ブラウザプロファイル）ごとに独立しており、Google Driveには一切同期されない（`js/local-cache.js`の`biometric`キーはDrive同期対象外）。

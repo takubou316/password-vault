@@ -12,14 +12,14 @@ export class DecryptionError extends Error {
   }
 }
 
-function bufToBase64(buf) {
+export function bufToBase64(buf) {
   const bytes = new Uint8Array(buf);
   let bin = '';
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin);
 }
 
-function base64ToBuf(b64) {
+export function base64ToBuf(b64) {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -66,4 +66,18 @@ export async function decryptVault(key, ivBase64, ciphertextBase64) {
   } catch {
     throw new DecryptionError();
   }
+}
+
+// vault以外の単なる文字列（生体認証ラップ用のマスターパスワードなど）を暗号化/復号する汎用版。
+export async function encryptString(key, plainString) {
+  const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plainString));
+  return { iv: bufToBase64(iv), ciphertext: bufToBase64(ciphertext) };
+}
+
+export async function decryptString(key, ivBase64, ciphertextBase64) {
+  const iv = new Uint8Array(base64ToBuf(ivBase64));
+  const ciphertext = base64ToBuf(ciphertextBase64);
+  const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return new TextDecoder().decode(plaintext);
 }

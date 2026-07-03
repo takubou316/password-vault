@@ -5,6 +5,8 @@ const $ = (id) => document.getElementById(id);
 export const el = {
   lockScreen: $('lock-screen'),
   lockModeLabel: $('lock-mode-label'),
+  biometricUnlockBtn: $('biometric-unlock-btn'),
+  biometricOrLabel: $('biometric-or-label'),
   masterPasswordInput: $('master-password-input'),
   masterPasswordConfirm: $('master-password-confirm'),
   unlockBtn: $('unlock-btn'),
@@ -16,9 +18,18 @@ export const el = {
   importBtn: $('import-btn'),
   syncBtn: $('sync-btn'),
   syncStatus: $('sync-status'),
+  deviceSettingsBtn: $('device-settings-btn'),
   lockBtn: $('lock-btn'),
   entryList: $('entry-list'),
   emptyMessage: $('empty-message'),
+
+  deviceSettingsModal: $('device-settings-modal'),
+  deviceSettingsCloseBtn: $('device-settings-close-btn'),
+  biometricUnsupportedNote: $('biometric-unsupported-note'),
+  biometricStatus: $('biometric-status'),
+  biometricEnableBtn: $('biometric-enable-btn'),
+  biometricDisableBtn: $('biometric-disable-btn'),
+  biometricSettingsError: $('biometric-settings-error'),
 
   entryModal: $('entry-modal'),
   entryModalTitle: $('entry-modal-title'),
@@ -74,6 +85,34 @@ export function setLockMode(mode) {
 
 export function setLockError(message) {
   el.lockError.textContent = message || '';
+}
+
+export function showBiometricUnlockButton() {
+  el.biometricUnlockBtn.style.display = '';
+  el.biometricOrLabel.style.display = '';
+}
+
+export function openDeviceSettingsModal({ supported, enrolled }) {
+  el.biometricUnsupportedNote.style.display = supported ? 'none' : '';
+  el.biometricEnableBtn.style.display = supported && !enrolled ? '' : 'none';
+  el.biometricDisableBtn.style.display = enrolled ? '' : 'none';
+  el.biometricStatus.textContent = enrolled ? '生体認証: 有効' : '生体認証: 無効';
+  el.biometricSettingsError.textContent = '';
+  el.deviceSettingsModal.style.display = '';
+}
+
+export function closeDeviceSettingsModal() {
+  el.deviceSettingsModal.style.display = 'none';
+}
+
+export function setBiometricSettingsStatus(enrolled) {
+  el.biometricStatus.textContent = enrolled ? '生体認証: 有効' : '生体認証: 無効';
+  el.biometricEnableBtn.style.display = enrolled ? 'none' : '';
+  el.biometricDisableBtn.style.display = enrolled ? '' : 'none';
+}
+
+export function setBiometricSettingsError(message) {
+  el.biometricSettingsError.textContent = message || '';
 }
 
 export function renderEntryList(entries, onSelect) {

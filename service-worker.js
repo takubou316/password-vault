@@ -15,6 +15,7 @@ const ASSETS = [
   './js/drive-sync.js',
   './js/import-csv.js',
   './js/import-notes.js',
+  './js/biometric.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
 ];

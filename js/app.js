@@ -2,10 +2,14 @@ import { deriveKey, kdfParams, encryptVault, decryptVault, DecryptionError } fro
 import {
   createEmptyVault, listEntries, getEntry, addEntry, updateEntry, deleteEntry, findDuplicate, listCategories,
 } from './vault-store.js';
-import { saveBlob, loadBlob, saveDriveFileId, loadDriveFileId } from './local-cache.js';
+import {
+  saveBlob, loadBlob, saveDriveFileId, loadDriveFileId,
+  saveBiometricUnlock, loadBiometricUnlock, clearBiometricUnlock,
+} from './local-cache.js';
 import { importChromeCsv } from './import-csv.js';
 import { parseNotesText } from './import-notes.js';
 import * as drive from './drive-sync.js';
+import * as biometric from './biometric.js';
 import * as ui from './ui.js';
 
 let masterPasswordPlain = null; // メモリ上のみ。ストレージ/Driveには絶対に送らない。
@@ -23,29 +27,48 @@ async function boot() {
   ui.setLockMode(existingBlob ? 'unlock' : 'setup');
   ui.showLockScreen();
 
-  ui.el.unlockBtn.addEventListener('click', () => handleUnlock(existingBlob));
-  ui.el.masterPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleUnlock(existingBlob); });
+  if (existingBlob) {
+    const record = await loadBiometricUnlock();
+    if (record && biometric.isSupported()) {
+      ui.showBiometricUnlockButton();
+      ui.el.biometricUnlockBtn.addEventListener('click', () => handleBiometricUnlock(record));
+    }
+  }
+
+  ui.el.unlockBtn.addEventListener('click', () => handleUnlock());
+  ui.el.masterPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleUnlock(); });
   wireAppScreen();
 }
 
-async function handleUnlock(existingBlob) {
+async function handleUnlock() {
   const password = ui.el.masterPasswordInput.value;
   if (!password) { ui.setLockError('マスターパスワードを入力してください'); return; }
 
+  // ロック→編集→再ロックのケースでも常に最新のデータを見るよう、都度読み直す（起動時のキャッシュを使い回さない）。
+  const existingBlob = await loadBlob();
   if (!existingBlob) {
     const confirm = ui.el.masterPasswordConfirm.value;
     if (password !== confirm) { ui.setLockError('確認用パスワードが一致しません'); return; }
-    const derived = await deriveKey(password);
-    masterPasswordPlain = password;
-    vaultKey = derived.key;
-    saltBase64 = derived.saltBase64;
-    vault = createEmptyVault();
-    await persist();
-    ui.showAppScreen();
-    refreshList();
+    await setupNewVault(password);
     return;
   }
 
+  await unlockWithPassword(password, existingBlob);
+}
+
+async function setupNewVault(password) {
+  const derived = await deriveKey(password);
+  masterPasswordPlain = password;
+  vaultKey = derived.key;
+  saltBase64 = derived.saltBase64;
+  vault = createEmptyVault();
+  await persist();
+  ui.showAppScreen();
+  refreshList();
+}
+
+// パスワード文字列とexistingBlobから解除を試みる。手動入力・生体認証どちらからも呼ばれる共通処理。
+async function unlockWithPassword(password, existingBlob) {
   try {
     const derived = await deriveKey(password, existingBlob.kdf.salt);
     const decrypted = await decryptVault(derived.key, existingBlob.iv, existingBlob.ciphertext);
@@ -56,9 +79,21 @@ async function handleUnlock(existingBlob) {
     driveFileId = await loadDriveFileId();
     ui.showAppScreen();
     refreshList();
+    return true;
   } catch (err) {
-    if (err instanceof DecryptionError) ui.setLockError(err.message);
-    else ui.setLockError('解除に失敗しました');
+    ui.setLockError(err instanceof DecryptionError ? err.message : '解除に失敗しました');
+    return false;
+  }
+}
+
+async function handleBiometricUnlock(record) {
+  try {
+    const password = await biometric.unlock(record);
+    const existingBlob = await loadBlob();
+    if (!existingBlob) return;
+    await unlockWithPassword(password, existingBlob);
+  } catch {
+    ui.setLockError('生体認証に失敗しました。マスターパスワードを入力してください');
   }
 }
 
@@ -149,6 +184,32 @@ function wireAppScreen() {
 
   ui.el.syncBtn.addEventListener('click', syncWithDrive);
   wireImportModal();
+  wireDeviceSettingsModal();
+}
+
+function wireDeviceSettingsModal() {
+  ui.el.deviceSettingsBtn.addEventListener('click', async () => {
+    const record = await loadBiometricUnlock();
+    ui.openDeviceSettingsModal({ supported: biometric.isSupported(), enrolled: !!record });
+  });
+  ui.el.deviceSettingsCloseBtn.addEventListener('click', () => ui.closeDeviceSettingsModal());
+
+  ui.el.biometricEnableBtn.addEventListener('click', async () => {
+    try {
+      const record = await biometric.enroll(masterPasswordPlain);
+      await saveBiometricUnlock(record);
+      ui.setBiometricSettingsStatus(true);
+      ui.showToast('生体認証を有効にしました');
+    } catch {
+      ui.setBiometricSettingsError('生体認証の登録に失敗またはキャンセルされました');
+    }
+  });
+
+  ui.el.biometricDisableBtn.addEventListener('click', async () => {
+    await clearBiometricUnlock();
+    ui.setBiometricSettingsStatus(false);
+    ui.showToast('生体認証を無効にしました');
+  });
 }
 
 async function syncWithDrive() {
