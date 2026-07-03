@@ -39,13 +39,29 @@ async function boot() {
 
   ui.el.unlockBtn.addEventListener('click', () => handleUnlock());
   ui.el.masterPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleUnlock(); });
+  ui.el.toggleMasterPasswordVisibility.addEventListener('click', () => {
+    const showing = ui.el.masterPasswordInput.type === 'text';
+    ui.el.masterPasswordInput.type = showing ? 'password' : 'text';
+    ui.el.masterPasswordConfirm.type = showing ? 'password' : 'text';
+  });
   wireAppScreen();
+}
+
+function isStandaloneLaunch() {
+  return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
 }
 
 async function refreshBiometricButtonVisibility(hasVault) {
   if (!hasVault) return;
   const record = await loadBiometricUnlock();
-  if (record && biometric.isSupported()) ui.showBiometricUnlockButton();
+  if (!record) return;
+  if (biometric.isSupported()) {
+    ui.showBiometricUnlockButton();
+  } else if (isStandaloneLaunch()) {
+    // iOS Safariでは「ホーム画面に追加」したアプリからだとWebAuthnが使えないことがある既知の制限。
+    // ボタンを出さないだけだと理由が分からず混乱するので、案内文を出す。
+    ui.showBiometricUnavailableNote();
+  }
 }
 
 async function handleUnlock() {

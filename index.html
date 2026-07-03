@@ -18,9 +18,13 @@
       <p id="lock-mode-label" class="muted"></p>
       <button id="biometric-unlock-btn" style="display:none">👆 生体認証で解除</button>
       <p id="biometric-or-label" class="muted" style="display:none">または</p>
-      <input type="password" id="master-password-input" placeholder="マスターパスワード" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <span class="pw-field">
+        <input type="password" id="master-password-input" placeholder="マスターパスワード" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button type="button" id="toggle-master-password-visibility" title="表示切替">👁</button>
+      </span>
       <input type="password" id="master-password-confirm" placeholder="マスターパスワード（確認）" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" style="display:none">
       <button id="unlock-btn">解除する</button>
+      <p id="biometric-unavailable-note" class="muted" style="display:none">生体認証はこの起動方法（ホーム画面から開いたアプリ）では使えないことがあります。マスターパスワードで解除してください。</p>
       <p id="lock-error" class="error"></p>
     </div>
   </div>

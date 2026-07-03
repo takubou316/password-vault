@@ -7,7 +7,9 @@ export const el = {
   lockModeLabel: $('lock-mode-label'),
   biometricUnlockBtn: $('biometric-unlock-btn'),
   biometricOrLabel: $('biometric-or-label'),
+  biometricUnavailableNote: $('biometric-unavailable-note'),
   masterPasswordInput: $('master-password-input'),
+  toggleMasterPasswordVisibility: $('toggle-master-password-visibility'),
   masterPasswordConfirm: $('master-password-confirm'),
   unlockBtn: $('unlock-btn'),
   lockError: $('lock-error'),
@@ -95,6 +97,10 @@ export function showBiometricUnlockButton() {
 export function hideBiometricUnlockButton() {
   el.biometricUnlockBtn.style.display = 'none';
   el.biometricOrLabel.style.display = 'none';
+}
+
+export function showBiometricUnavailableNote() {
+  el.biometricUnavailableNote.style.display = '';
 }
 
 export function openDeviceSettingsModal({ supported, enrolled }) {
