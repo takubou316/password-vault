@@ -11,6 +11,10 @@
 
 `serve.bat` を実行（`python -m http.server 8080`）し、`http://localhost:8080` を開く。
 
+## 公開URL
+
+https://takubou316.github.io/password-vault/ （GitHub Pages、リポジトリ: https://github.com/takubou316/password-vault ）
+
 ## アーキテクチャ
 
 - `index.html` — アプリシェル（ロック画面/一覧/編集モーダル/インポートモーダルのDOM）
@@ -30,7 +34,7 @@
 1. https://console.cloud.google.com/ で新規プロジェクトを作成
 2. 「APIとサービス」→「OAuth同意画面」を設定（外部/テストユーザーとして自分のGmailアドレスを追加）
 3. 「認証情報」→「認証情報を作成」→「OAuthクライアントID」（種類: ウェブアプリケーション）
-   - 承認済みのJavaScript生成元に `http://localhost:8080` と、GitHub Pagesで公開する場合は `https://<GitHubユーザー名>.github.io` を追加
+   - 承認済みのJavaScript生成元に `http://localhost:8080` と `https://takubou316.github.io` を追加
 4. 発行された クライアントID（`xxxx.apps.googleusercontent.com`）を [js/drive-sync.js](js/drive-sync.js) 冒頭の `CLIENT_ID` 定数に貼り付ける
 5. アプリのヘッダーにある「同期」ボタンを押すとGoogleサインインのポップアップが出る
 
