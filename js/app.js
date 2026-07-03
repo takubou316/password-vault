@@ -57,7 +57,7 @@ async function refreshBiometricButtonVisibility(hasVault) {
   if (!hasVault) return;
   const record = await loadBiometricUnlock();
   if (!record) return;
-  if (biometric.isSupported()) {
+  if (await biometric.isSupported()) {
     ui.showBiometricUnlockButton();
   } else if (isStandaloneLaunch()) {
     // iOS Safariでは「ホーム画面に追加」したアプリからだとWebAuthnが使えないことがある既知の制限。
@@ -219,7 +219,7 @@ function wireAppScreen() {
 function wireDeviceSettingsModal() {
   ui.el.deviceSettingsBtn.addEventListener('click', async () => {
     const record = await loadBiometricUnlock();
-    ui.openDeviceSettingsModal({ supported: biometric.isSupported(), enrolled: !!record });
+    ui.openDeviceSettingsModal({ supported: await biometric.isSupported(), enrolled: !!record });
   });
   ui.el.deviceSettingsCloseBtn.addEventListener('click', () => ui.closeDeviceSettingsModal());
 

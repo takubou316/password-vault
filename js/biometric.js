@@ -14,8 +14,17 @@ import { bufToBase64, base64ToBuf, encryptString, decryptString } from './crypto
 const RP_NAME = 'Password Vault';
 const TIMEOUT_MS = 60000;
 
-export function isSupported() {
-  return typeof window !== 'undefined' && !!window.PublicKeyCredential && !!navigator.credentials;
+// APIの存在だけでなく、実際に使える生体認証ハードウェア（Face ID/指紋/Windows Hello等）が
+// あるかどうかまで確認する。これをしないと、PCなどハードウェアが無い環境でも「有効にする」ボタンが
+// 出てしまい、押しても登録に失敗するだけになる。
+export async function isSupported() {
+  if (typeof window === 'undefined' || !window.PublicKeyCredential || !navigator.credentials) return false;
+  if (!window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) return false;
+  try {
+    return await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch {
+    return false;
+  }
 }
 
 // ブラウザ/OSがWebAuthnのtimeoutオプションを守らず無期限に固まるケースがあるため、
