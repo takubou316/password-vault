@@ -61,6 +61,15 @@ export const el = {
   importCancelBtn: $('import-cancel-btn'),
 };
 
+// デフォルメした目のアイコン。絵文字の👁だと生々しくて怖いという声があったため線画SVGにしている。
+const EYE_OPEN_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/></svg>`;
+const EYE_CLOSED_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12.5s3.8 4.5 10 4.5 10-4.5 10-4.5"/><path d="M6.5 15.3 5 17.5M17.5 15.3 19 17.5M12 17.3v2.4"/></svg>`;
+
+// visible=trueなら「今見えている」ので開いた目、falseなら閉じた目を表示する。
+export function setEyeIcon(button, visible) {
+  button.innerHTML = visible ? EYE_OPEN_SVG : EYE_CLOSED_SVG;
+}
+
 function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -156,6 +165,7 @@ export function openEntryForm(entry) {
   el.entryEmail.value = entry?.email || '';
   el.entryPassword.value = entry?.password || '';
   el.entryPassword.type = 'password';
+  setEyeIcon(el.togglePasswordVisibility, false);
   el.entryNotes.value = entry?.notes || '';
   el.entryCreatedAt.textContent = entry ? `作成日: ${new Date(entry.createdAt).toLocaleString('ja-JP')}` : '';
   el.entryError.textContent = '';

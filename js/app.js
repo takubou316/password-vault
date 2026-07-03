@@ -39,10 +39,12 @@ async function boot() {
 
   ui.el.unlockBtn.addEventListener('click', () => handleUnlock());
   ui.el.masterPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleUnlock(); });
+  ui.setEyeIcon(ui.el.toggleMasterPasswordVisibility, false);
   ui.el.toggleMasterPasswordVisibility.addEventListener('click', () => {
-    const showing = ui.el.masterPasswordInput.type === 'text';
-    ui.el.masterPasswordInput.type = showing ? 'password' : 'text';
-    ui.el.masterPasswordConfirm.type = showing ? 'password' : 'text';
+    const nowVisible = ui.el.masterPasswordInput.type === 'password';
+    ui.el.masterPasswordInput.type = nowVisible ? 'text' : 'password';
+    ui.el.masterPasswordConfirm.type = nowVisible ? 'text' : 'password';
+    ui.setEyeIcon(ui.el.toggleMasterPasswordVisibility, nowVisible);
   });
   wireAppScreen();
 }
@@ -159,11 +161,14 @@ function wireAppScreen() {
   ui.el.entryCancelBtn.addEventListener('click', () => ui.closeEntryForm());
 
   ui.el.togglePasswordVisibility.addEventListener('click', () => {
-    ui.el.entryPassword.type = ui.el.entryPassword.type === 'password' ? 'text' : 'password';
+    const nowVisible = ui.el.entryPassword.type === 'password';
+    ui.el.entryPassword.type = nowVisible ? 'text' : 'password';
+    ui.setEyeIcon(ui.el.togglePasswordVisibility, nowVisible);
   });
   ui.el.generatePasswordBtn.addEventListener('click', () => {
     ui.el.entryPassword.type = 'text';
     ui.el.entryPassword.value = ui.generatePassword();
+    ui.setEyeIcon(ui.el.togglePasswordVisibility, true);
   });
 
   ui.el.entrySaveBtn.addEventListener('click', async () => {
